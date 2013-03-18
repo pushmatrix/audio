@@ -1,12 +1,14 @@
 
 
 jQuery ($) ->
-  target = new google.maps.LatLng(59.33, 18.07)
+  target = new google.maps.LatLng(59.3313, 18.071)
   markers = []
   matrix = []
   steps  = 16
-  width  = 400
+  width  = $('.container').width()
   bpm = 120
+  markerAnimationDelay = 300
+  animationStyle = google.maps.Animation.DROP
 
   # How long the beat is in milliseconds
   beatInterval = 1 / (bpm / 60) * 1000
@@ -19,10 +21,20 @@ jQuery ($) ->
           $('#overlay').fadeIn()
         else
           $('#overlay').fadeOut()
+
+
+      $('#animationStyle').change (v) ->
+        animationStyle = google.maps.Animation[this.value]
+        if this.value == google.maps.Animation.DROP
+          markerAnimationDelay = 400
+        else
+          markerAniamtionDelay = 0
+
+
       # Setup map options
       mapOptions =
           center: target
-          zoom: 14
+          zoom: 15
           streetViewControl: false
           panControl: false
           mapTypeId: google.maps.MapTypeId.ROADMAP
@@ -33,13 +45,6 @@ jQuery ($) ->
 
       # Create the map with above options in div
       map = window.map = new google.maps.Map(document.getElementById("map"),mapOptions)
-
-      # Drop marker in the same location
-      marker = new google.maps.Marker
-          map: map
-          animation: google.maps.Animation.DROP
-          position: mapOptions.center
-          icon: 'http://www.google.com/intl/en_us/mapfiles/ms/micons/red-dot.png'
 
       # Create a request field to hold POIs
       request =
@@ -69,11 +74,15 @@ jQuery ($) ->
         matrix = []
         $('table td').removeClass('on')
 
-      turnOnCell = (row, col) ->
-        matrix[row] ||= []
-        matrix[row].push(col) unless col in matrix[row]
-        cell = $('#matrix')[0].rows[row].cells[col]
-        $(cell).addClass('on')
+      turnOnCell = (row, col, marker) ->
+        matrix[col] ||= {}
+
+        cell = matrix[col][row] ||= {}
+        cell.markers ||= []
+        cell.markers.push marker
+
+        cell.node = $($('#matrix')[0].rows[row].cells[col])
+        cell.node.addClass('on')
 
       window.updateMatrix = ->
         clearMatrix()
@@ -83,7 +92,7 @@ jQuery ($) ->
           p = proj.fromLatLngToContainerPixel(pos)
           [row, col] = getCellPosition(p.y, p.x)
           if row >= 0 && row < steps && col >= 0 && col < steps
-            turnOnCell(row, col)
+            turnOnCell(row, col, marker)
 
         matrix
 
@@ -92,29 +101,48 @@ jQuery ($) ->
           updateMatrix()
 
 
-      currentStep = 0
-      setInterval ->
-        currentStep++
-        $('#matrix td').removeClass('active')
-        $($('#matrix')[0].rows).find("td:nth-child(#{currentStep}).on").addClass('active')
+      highlightCell = (node, delay = 0) ->
+        setTimeout ->
+          node.addClass('active')
+          setTimeout ->
+            node.removeClass('active')
+          , 500
+        , delay
 
-        if activeCells = matrix[currentStep]
-          for cell in activeCells
-            @audioPlayer.play(cell)
+      bounceMarker = (marker) ->
+        marker.setAnimation(animationStyle)
+        setTimeout ->
+          marker.setAnimation(google.maps.Animation.NONE)
+        , 700
+
+      @start = ->
+        clearInterval(@interval)
+        currentStep = 0
+        @interval = setInterval ->
+          if activeCells = matrix[currentStep]
+            for row, cell of activeCells
+              for marker in cell.markers
+                bounceMarker(marker)
+
+              highlightCell(cell.node, markerAnimationDelay)
+              @audioPlayer.play(row, markerAnimationDelay)
 
 
-        if currentStep >= steps
-          currentStep = 0
-      , beatInterval * 0.25
+          currentStep++
+          if currentStep >= steps
+            currentStep = 0
+        , beatInterval * 0.25
 
       context = new webkitAudioContext()
 
       class AudioPlayer
 
         constructor: ->
+          @compressor = context.createDynamicsCompressor()
+          @compressor.connect(context.destination)
           paths = []
           for i in [1..16]
-            paths.push "samples/bell#{i}.wav"
+            paths.push "samples/woody/woody_#{i}.ogg"
           bufferLoader = new BufferLoader(
             context
             paths
@@ -123,14 +151,16 @@ jQuery ($) ->
 
           bufferLoader.load()
 
-        play: (index) ->
+        play: (index, delay = 0) ->
           note = context.createBufferSource()
           note.buffer = @bufferList[index]
-          note.connect(context.destination)
-          note.noteOn(0)
+          note.connect(@compressor)
+          setTimeout ->
+            note.noteOn(0)
+          , delay
 
       @audioPlayer = window.audioPlayer = new AudioPlayer
-
+      @start()
 
 
 
