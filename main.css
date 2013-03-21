@@ -1,15 +1,93 @@
 body {
-  font-family: courier;
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+  font-weight: 300;
+}
+
+input {
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+  font-weight: 300;
 }
 
 small {
   font-size: 10px;
 }
 
+
+#search {
+  font-size: 20px;
+  color: grey;
+  margin-bottom: 10px;
+}
+
+#location {
+  height: 50px;
+  font-size: 20px;
+  color: #4B8DF2;
+  border: none;
+}
+
+#dataset {
+  cursor: pointer;
+  color: #4B8DF2;
+  position: relative;
+}
+
+#datalist {
+  display: none;
+  height: 0px;
+  position: absolute;
+  background: white;
+  z-index: 100000;
+  width: 600px;
+  height: auto;
+  top: 35px;
+  border: 1px solid grey;
+  box-shadow: 00px 0px 5px #4B8DF2;
+  padding: 5px 5px 5px 20px;
+}
+
+
+#datalist::before {
+    background-color: white;
+    border-left: 1px solid grey;
+    border-top: 1px solid grey;
+    content: "\00a0";
+    display: block;
+    height: 16px;
+    position: absolute;
+    top: -9px;
+    transform:             rotate( 29deg ) skew( -35deg );
+        -moz-transform:    rotate( 29deg ) skew( -35deg );
+        -ms-transform:     rotate( 29deg ) skew( -35deg );
+        -o-transform:      rotate( 29deg ) skew( -35deg );
+        -webkit-transform: rotate( 29deg ) skew( -35deg );
+    width:  20px;
+}
+
+#datalist ul {
+  list-style-type: none;
+  text-align: left;
+}
+
+#datalist li:hover {
+  background: #4B8DF2;
+  color: white;
+}
+
+#datalist .column {
+  float: left;
+  width: 30%;
+  padding-right: 20px;
+}
+
 #map, #overlay {
   width: 100%;
   height: 100%;
-  margin-bottom: 5px;
+}
+
+#map-container {
+  margin-top: 5px;
+  border: 1px solid lightgrey;
 }
 
 #overlay {
@@ -26,29 +104,92 @@ small {
   margin: 0;
   float: left;
   width: 100%;
+  background: black;
 }
 
-#navigation li {
+#navigation .item {
   color: white;
   float: left;
   display: inline;
   list-style-type: none;
-  margin: 0;
-  padding: 0;
   width: 25%;
-  height: 50px;
+}
+
+#navigation .item:hover {
+  opacity: 0.95;
 }
 
 #navigation h4 {
-  opacity: 0.4;
   font-size: 15px;
 }
+
+#navigation {
+  height: 50px;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  text-align: center;
+  cursor: pointer;
+}
+
+.item {
+  max-height: 50px;
+  min-height: 50px;
+  overflow: hidden;
+  position: relative;
+  text-transform: capitalize;
+  transition: max-height 0.2s ease-in-out;
+  -moz-transition: max-height 0.2s ease-in-out;
+  -webkit-transition: max-height 0.2s ease-in-out;
+}
+
+.top {
+  height: 50px;
+  border-bottom: 1px solid rgba(0, 0, 0, .1);
+}
+
+.item:hover {
+  max-height: 500px;
+}
+
+.subitems {
+  width: 100%;
+  position: relative;
+  background: inherit;
+}
+
+.subitem {
+  height: 100%;
+  top: 5px;
+  margin: 0;
+  border-bottom: 1px solid rgba(0, 0, 0, .1);
+  padding: 0;
+  line-height: 50px;
+}
+
+.subitem:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+.property {
+  position: relative;
+  top: 5px;
+}
+
+.currentState {
+  position: relative;
+  top: 8px;
+  font-size: 15px;
+  color: rgba(255,255,255,0.6);
+}
+
 
 .container {
   position: relative;
   height: 500;
   width: 500;
-  border: 6px solid #dedede;
   margin: 0em auto;
 }
 
@@ -60,25 +201,32 @@ table {
 td {
   border: 1px solid black;
   background: grey;
+  transition: opacity 0.05s ease-in-out;
+  -moz-transition: opacity 0.05s ease-in-out;
+  -webkit-transition: opacity 0.05s ease-in-out;
 }
 
-td.active {
-  border: 1px solid grey;
-  -webkit-animation: pulsate 0.5s ease-out;
-  -webkit-animation-iteration-count: infinite;
-}
 
 td.on {
   background: white;
   border: 1px solid grey;
 }
 
+td.active {
+  border: 1px solid grey;
+  opacity: 0;
+}
+
 #overlay {
   position: absolute;
 }
 
-@-webkit-keyframes pulsate {
-    0% {-webkit-transform: opacity: 1.0;}
-    50% {opacity: 0.5;}
-    100% {-webkit-transform: opacity: 1.0;}
+li {
+  transition: background .2s ease-in-out;
+  -moz-transition: background .2s ease-in-out;
+  -webkit-transition: background .2s ease-in-out;
 }
+a:link {color:#4B8DF2; text-decoration: none;}      /* unvisited link */
+a:visited {color:#4B8DF2;}  /* visited link */
+a:hover {color:#4B8DF2; text-decoration: underline;}  /* mouse over link */
+a:active {color:#4B8DF2;}  /* selected link */

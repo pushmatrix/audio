@@ -2,37 +2,97 @@
 (function() {
 
   jQuery(function($) {
-    var animationStyle, beatInterval, bpm, callback, createMarker, init, markerAnimationDelay, markers, matrix, steps, target, width;
-    target = new google.maps.LatLng(59.3313, 18.071);
+    var animationStyle, beatInterval, bpm, callback, createMarker, currentDataset, init, markers, matrix, options, steps, target, width;
+    target = new google.maps.LatLng(59.32815833916834, 18.079346359863283);
     markers = [];
     matrix = [];
     steps = 16;
     width = $('.container').width();
     bpm = 120;
-    markerAnimationDelay = 300;
+    window.markerAnimationDelay = 300;
     animationStyle = google.maps.Animation.DROP;
+    currentDataset = 'restaurant';
+    options = {
+      sequencer: 'off',
+      tempo: '120',
+      instrument: 'wood',
+      animation: 'drop'
+    };
     beatInterval = 1 / (bpm / 60) * 1000;
     init = function() {
-      var AudioPlayer, bounceMarker, clearMatrix, context, event, getCellPosition, highlightCell, i, j, map, mapOptions, overlay, request, row, service, turnOnCell, _i, _j, _k, _len, _ref, _ref1, _ref2;
-      $('#showOverlay').click(function() {
-        if (this.checked) {
-          return $('#overlay').fadeIn();
-        } else {
-          return $('#overlay').fadeOut();
+      var AudioPlayer, bounceMarker, clearMatrix, context, event, getCellPosition, highlightCell, i, j, map, mapOptions, overlay, row, turnOnCell, updateOptions, _i, _j, _k, _len, _ref, _ref1, _ref2,
+        _this = this;
+      $.get('datatypes.json', function(types) {
+        var column, index, li, text, type, _i, _len, _results;
+        _results = [];
+        for (index = _i = 0, _len = types.length; _i < _len; index = ++_i) {
+          type = types[index];
+          li = document.createElement('li');
+          li.className = 'datatype';
+          if (Array.isArray(type)) {
+            text = type[1];
+            $(li).attr('data-type', type[0]);
+          } else {
+            $(li).attr('data-type', type);
+            text = "" + type + "s";
+          }
+          text = text.split('_').join(' ');
+          li.innerHTML = text;
+          column = Math.floor(index / 30);
+          _results.push($("#datalist .column" + column).append(li));
+        }
+        return _results;
+      });
+      $('body').click(function(event) {
+        if (event.target.id !== 'currentDataset' && !$(event.target).closest('#datalist').length) {
+          return $('#datalist').fadeOut('fast');
         }
       });
-      $('#animationStyle').change(function(v) {
-        var markerAniamtionDelay;
-        animationStyle = google.maps.Animation[this.value];
-        if (this.value === google.maps.Animation.DROP) {
-          return markerAnimationDelay = 400;
+      $('#currentDataset').click(function(event) {
+        return $('#datalist').fadeIn('fast');
+      });
+      $('#datalist').on('click', '.datatype', function(event) {
+        $('#currentDataset').text($(event.target).text());
+        $('#datalist').fadeOut('fast');
+        currentDataset = $(event.target).data('type');
+        return _this.search();
+      });
+      updateOptions = function() {
+        var el, key, markerAnimationDelay, newInterval, value, _results;
+        if (options.sequencer === 'on') {
+          $('#overlay').fadeIn();
         } else {
-          return markerAniamtionDelay = 0;
+          $('#overlay').fadeOut();
         }
+        if ((newInterval = 1 / (options.tempo / 60) * 1000) !== beatInterval) {
+          beatInterval = newInterval;
+          this.start();
+        }
+        animationStyle = google.maps.Animation[options.animation.toUpperCase()];
+        if (animationStyle === google.maps.Animation.DROP) {
+          markerAnimationDelay = 300;
+        } else {
+          markerAnimationDelay = 0;
+        }
+        _results = [];
+        for (key in options) {
+          value = options[key];
+          el = $("#navigation [data-property=" + key + "]");
+          _results.push(el.find('.currentState').text(value));
+        }
+        return _results;
+      };
+      $('.subitem').click(function() {
+        var parent, property, value;
+        value = $(this).text();
+        parent = $(this).parents('.item');
+        property = parent.data('property');
+        options[property] = value.toLowerCase();
+        return updateOptions();
       });
       mapOptions = {
         center: target,
-        zoom: 15,
+        zoom: 14,
         streetViewControl: false,
         panControl: false,
         mapTypeId: google.maps.MapTypeId.ROADMAP,
@@ -44,12 +104,21 @@
         }
       };
       map = window.map = new google.maps.Map(document.getElementById("map"), mapOptions);
-      request = {
-        location: target,
-        radius: 400
+      this.search = function() {
+        var marker, request, service, _i, _len;
+        for (_i = 0, _len = markers.length; _i < _len; _i++) {
+          marker = markers[_i];
+          marker.setMap(null);
+        }
+        markers = [];
+        request = {
+          location: target,
+          radius: 4000,
+          types: [currentDataset]
+        };
+        service = new google.maps.places.PlacesService(map);
+        return service.nearbySearch(request, callback);
       };
-      service = new google.maps.places.PlacesService(map);
-      service.nearbySearch(request, callback);
       overlay = new google.maps.OverlayView();
       overlay.draw = function() {};
       overlay.setMap(map);
@@ -109,13 +178,13 @@
           node.addClass('active');
           return setTimeout(function() {
             return node.removeClass('active');
-          }, 500);
+          }, 100);
         }, delay);
       };
       bounceMarker = function(marker) {
         marker.setAnimation(animationStyle);
         return setTimeout(function() {
-          return marker.setAnimation(google.maps.Animation.NONE);
+          return marker.setAnimation(google.maps.Animation);
         }, 700);
       };
       this.start = function() {
@@ -152,7 +221,7 @@
           this.compressor.connect(context.destination);
           paths = [];
           for (i = _l = 1; _l <= 16; i = ++_l) {
-            paths.push("samples/woody/woody_" + i + ".ogg");
+            paths.push("samples/wood/wood_" + i + ".ogg");
           }
           bufferLoader = new BufferLoader(context, paths, function(bufferList) {
             _this.bufferList = bufferList;
@@ -176,8 +245,10 @@
         return AudioPlayer;
 
       })();
+      this.search();
       this.audioPlayer = window.audioPlayer = new AudioPlayer;
-      return this.start();
+      this.start();
+      return updateOptions();
     };
     callback = function(results, status) {
       var attrs, index;

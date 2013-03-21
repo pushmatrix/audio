@@ -5,31 +5,74 @@
   <script src="bufferloader.js" ></script>
   <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?libraries=places&sensor=false&key=AIzaSyBxe2ymZpFamY42ffKh_CgjmysWoKW1Y4A"></script>
   <script type="text/javascript" src="main.js"></script>
-  <title></title>
+  <title>Google Maps Music</title>
 </head>
 <body>
   <div class="container">
-    <div id="overlay">
-      <table id="matrix"></table>
-    </div>
-    <div id="map"></div>
-    <span>
-    <input id="showOverlay" type="checkbox" name="overlay">
-    <label for="showOverlay">Show sequencer grid</label>
-    <span style="float: right">
-      Animation:
-      <select id="animationStyle">
-        <option value="DROP">Drop</option>
-        <option value="BOUNCE">Bounce</option>
-      </select>
+    <span id='search'>
+      Listen to
+      <span id='dataset'>
+        <span id='currentDataset'>restaurants</span>
+        <div id='datalist'>
+          <ul class='column column0'></ul>
+          <ul class='column column1'></ul>
+          <ul class='column column2'></ul>
+
+        </div>
+      </span>
+      in Stockholm
+      <!-- <input type='text' id='location' value='Stockholm'/> -->
     </span>
-    <br/>
-    <!--  <ul id="navigation">
-      <li style="background: #4B8DF2"><h4>Sequencer</h4></li>
-      <li style="background: #FCC94E"><h4>Data set</h4></li>
-      <li style="background: #1B9F5B"><h4>Instrument</h4></li>
-      <li style="background: #DA4943"><h4>Location</h4></li>
-    </ul> -->
+    <div id="map-container">
+      <div id="overlay">
+        <table id="matrix"></table>
+      </div>
+      <div id="map"></div>
+    </div>
+
+     <ul id="navigation">
+      <li class='item' style="background: #4B8DF2" data-property='sequencer'>
+        <div class='top'>
+          <span class='property'>Grid</span><br/>
+          <span class='currentState'></span>
+        </div>
+        <ul class='subitems'>
+          <li class='subitem'>On</li>
+          <li class='subitem'>Off</li>
+        </ul>
+      </li>
+      <li class='item' style="background: #FCC94E" data-property='tempo'>
+        <div class='top'>
+          <span class='property'>Tempo</span><br/>
+          <span class='currentState'></span>
+        </div>
+        <ul class='subitems'>
+          <li class='subitem'>60</li>
+          <li class='subitem'>90</li>
+          <li class='subitem'>120</li>
+          <li class='subitem'>150</li>
+          <li class='subitem'>180</li>
+        </ul>
+      </li>
+      <li class='item' style="background: #1B9F5B" data-property='instrument'>
+        <div class='top'>
+          <span class='property'>Instrument</span><br/>
+          <span class='currentState'></span>
+        </div>
+        <ul class='subitems'>
+          <li class='subitem'>wood</li>
+        </ul>
+      </li>
+      <li class='item' style="background: #DA4943" data-property='animation'>
+      <div class='top'>
+          <span class='property'>Animation</span><br/>
+          <span class='currentState'></span>
+        </div>
+        <ul class='subitems'>
+          <li class='subitem'>drop</li>
+          <li class='subitem'>bounce</li>
+        </ul></li>
+    </ul>
     <br/>
     <small>A project by <a href="http://twitter.com/pushmatrix" target="_blank">@pushmatrix</a></small>
   </div>

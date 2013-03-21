@@ -1,40 +1,85 @@
 
 
 jQuery ($) ->
-  target = new google.maps.LatLng(59.3313, 18.071)
+  target = new google.maps.LatLng(59.32815833916834, 18.079346359863283)
   markers = []
   matrix = []
   steps  = 16
   width  = $('.container').width()
   bpm = 120
-  markerAnimationDelay = 300
+  window.markerAnimationDelay = 300
   animationStyle = google.maps.Animation.DROP
+  currentDataset = 'restaurant'
+  options =
+    sequencer: 'off'
+    tempo: '120'
+    instrument: 'wood'
+    animation: 'drop'
 
   # How long the beat is in milliseconds
   beatInterval = 1 / (bpm / 60) * 1000
 
   init = () ->
 
+      $.get 'datatypes.json', (types) ->
+        for type, index in types
+          li = document.createElement('li')
+          li.className = 'datatype'
 
-      $('#showOverlay').click ->
-        if this.checked
-          $('#overlay').fadeIn()
+          if Array.isArray(type)
+            text = type[1]
+            $(li).attr('data-type', type[0])
+          else
+            $(li).attr('data-type', type)
+            text = "#{type}s"
+          text = text.split('_').join(' ')
+          li.innerHTML = text
+          column = Math.floor(index / 30)
+          $("#datalist .column#{column}").append(li)
+
+      $('body').click (event) ->
+        if event.target.id != 'currentDataset' && !$(event.target).closest('#datalist').length
+          $('#datalist').fadeOut('fast')
+
+      $('#currentDataset').click (event) ->
+        $('#datalist').fadeIn('fast')
+
+      $('#datalist').on 'click', '.datatype', (event) =>
+        $('#currentDataset').text($(event.target).text())
+        $('#datalist').fadeOut('fast')
+        currentDataset = $(event.target).data('type')
+        @search()
+
+
+      updateOptions = ->
+        if options.sequencer == 'on' then $('#overlay').fadeIn() else $('#overlay').fadeOut()
+
+        if (newInterval = 1 / (options.tempo / 60) * 1000) != beatInterval
+          beatInterval = newInterval
+          @start()
+
+        animationStyle = google.maps.Animation[options.animation.toUpperCase()]
+        if animationStyle == google.maps.Animation.DROP
+          markerAnimationDelay = 300
         else
-          $('#overlay').fadeOut()
+          markerAnimationDelay = 0
+
+        for key, value of options
+          el = $("#navigation [data-property=#{key}]")
+          el.find('.currentState').text(value)
 
 
-      $('#animationStyle').change (v) ->
-        animationStyle = google.maps.Animation[this.value]
-        if this.value == google.maps.Animation.DROP
-          markerAnimationDelay = 400
-        else
-          markerAniamtionDelay = 0
-
+      $('.subitem').click ->
+        value = $(this).text()
+        parent = $(this).parents('.item')
+        property = parent.data('property')
+        options[property] = value.toLowerCase()
+        updateOptions()
 
       # Setup map options
       mapOptions =
           center: target
-          zoom: 15
+          zoom: 14
           streetViewControl: false
           panControl: false
           mapTypeId: google.maps.MapTypeId.ROADMAP
@@ -46,14 +91,21 @@ jQuery ($) ->
       # Create the map with above options in div
       map = window.map = new google.maps.Map(document.getElementById("map"),mapOptions)
 
-      # Create a request field to hold POIs
-      request =
-          location: target
-          radius: 400
+      @search = ->
+        # Clean up all existing markers first
+        for marker in markers
+          marker.setMap(null)
 
-      # Setup places nearby search (it setups points near the center marker)
-      service = new google.maps.places.PlacesService(map)
-      service.nearbySearch(request, callback)
+        markers = []
+        # Create a request field to hold POIs
+        request =
+            location: target
+            radius: 4000
+            types: [currentDataset]
+
+        # Setup places nearby search (it setups points near the center marker)
+        service = new google.maps.places.PlacesService(map)
+        service.nearbySearch(request, callback)
 
       overlay = new google.maps.OverlayView();
       overlay.draw = ->
@@ -106,13 +158,13 @@ jQuery ($) ->
           node.addClass('active')
           setTimeout ->
             node.removeClass('active')
-          , 500
+          , 100
         , delay
 
       bounceMarker = (marker) ->
         marker.setAnimation(animationStyle)
         setTimeout ->
-          marker.setAnimation(google.maps.Animation.NONE)
+          marker.setAnimation(google.maps.Animation)
         , 700
 
       @start = ->
@@ -142,7 +194,7 @@ jQuery ($) ->
           @compressor.connect(context.destination)
           paths = []
           for i in [1..16]
-            paths.push "samples/woody/woody_#{i}.ogg"
+            paths.push "samples/wood/wood_#{i}.ogg"
           bufferLoader = new BufferLoader(
             context
             paths
@@ -159,12 +211,10 @@ jQuery ($) ->
             note.noteOn(0)
           , delay
 
+      @search()
       @audioPlayer = window.audioPlayer = new AudioPlayer
       @start()
-
-
-
-
+      updateOptions()
 
 
 
