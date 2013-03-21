@@ -221,7 +221,7 @@
           this.compressor.connect(context.destination);
           paths = [];
           for (i = _l = 1; _l <= 16; i = ++_l) {
-            paths.push("samples/wood/wood_" + i + ".ogg");
+            paths.push("samples/wood/wood" + i + ".ogg");
           }
           bufferLoader = new BufferLoader(context, paths, function(bufferList) {
             _this.bufferList = bufferList;

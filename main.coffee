@@ -194,7 +194,7 @@ jQuery ($) ->
           @compressor.connect(context.destination)
           paths = []
           for i in [1..16]
-            paths.push "samples/wood/wood_#{i}.ogg"
+            paths.push "samples/wood/wood#{i}.ogg"
           bufferLoader = new BufferLoader(
             context
             paths
