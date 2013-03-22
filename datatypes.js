@@ -1,4 +1,4 @@
-[
+datatypes = [
   "aquarium",
   [
     "art_gallery",
@@ -40,7 +40,7 @@
   "hardware_store",
   "home_goods_store",
   "hospital",
-  "insurance_agency",
+  ["insurance_agency", "insurance agencies"],
   "jewelry_store",
   [
       "laundry",

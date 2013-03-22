@@ -1,7 +1,8 @@
 
 
 jQuery ($) ->
-  target = new google.maps.LatLng(59.32815833916834, 18.079346359863283)
+  coords = (hash.get('coords') || "").split(',')
+  target = new google.maps.LatLng(coords[0] || 59.32815833916834, coords[1] || 18.079346359863283)
   markers = []
   matrix = []
   steps  = 16
@@ -9,20 +10,25 @@ jQuery ($) ->
   bpm = 120
   window.markerAnimationDelay = 300
   animationStyle = google.maps.Animation.DROP
-  currentDataset = 'restaurant'
+  currentDataset = hash.get('dataset') || 'restaurant'
   options =
-    sequencer: 'off'
-    tempo: '120'
-    instrument: 'wood'
-    animation: 'drop'
+    sequencer: hash.get('sequencer') || 'off'
+    tempo: hash.get('tempo') || '120'
+    instrument: hash.get('instrument') || 'wood'
+    animation: hash.get('animation') || 'drop'
 
   # How long the beat is in milliseconds
   beatInterval = 1 / (bpm / 60) * 1000
 
   init = () ->
 
-      $.get 'datatypes.json', (types) ->
-        for type, index in types
+      generateURL = ->
+        coords = map.getCenter().toUrlValue()
+        hash.add coords: coords
+        hash.add dataset: currentDataset
+        hash.add options
+
+        for type, index in datatypes
           li = document.createElement('li')
           li.className = 'datatype'
 
@@ -48,6 +54,7 @@ jQuery ($) ->
         $('#currentDataset').text($(event.target).text())
         $('#datalist').fadeOut('fast')
         currentDataset = $(event.target).data('type')
+        generateURL()
         @search()
 
 
@@ -67,6 +74,11 @@ jQuery ($) ->
         for key, value of options
           el = $("#navigation [data-property=#{key}]")
           el.find('.currentState').text(value)
+
+        format = $("#navigation [data-name=#{options.instrument}]").data('format')
+        @audioPlayer.selectInstrument(options.instrument, format)
+
+        generateURL()
 
 
       $('.subitem').click ->
@@ -152,6 +164,9 @@ jQuery ($) ->
         google.maps.event.addListener map, event, ->
           updateMatrix()
 
+      google.maps.event.addListener map, 'idle', ->
+        generateURL()
+
 
       highlightCell = (node, delay = 0) ->
         setTimeout ->
@@ -189,21 +204,26 @@ jQuery ($) ->
 
       class AudioPlayer
 
-        constructor: ->
+        constructor: () ->
+          @instruments = {}
           @compressor = context.createDynamicsCompressor()
           @compressor.connect(context.destination)
-          paths = []
-          for i in [1..16]
-            paths.push "samples/wood/wood#{i}.ogg"
-          bufferLoader = new BufferLoader(
-            context
-            paths
-            (@bufferList) =>
-          )
 
-          bufferLoader.load()
+        selectInstrument: (name, format)->
+          unless @bufferList = @instruments[name]
+            paths = []
+            for i in [1..16]
+              paths.push "samples/#{name}/#{name}#{i}.#{format}"
+            bufferLoader = new BufferLoader(
+              context
+              paths
+              (@bufferList) =>
+                @instruments[name] = @bufferList
+            )
+            bufferLoader.load()
 
         play: (index, delay = 0) ->
+          return unless @bufferList
           note = context.createBufferSource()
           note.buffer = @bufferList[index]
           note.connect(@compressor)
@@ -212,7 +232,7 @@ jQuery ($) ->
           , delay
 
       @search()
-      @audioPlayer = window.audioPlayer = new AudioPlayer
+      @audioPlayer = new AudioPlayer
       @start()
       updateOptions()
 

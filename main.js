@@ -2,8 +2,9 @@
 (function() {
 
   jQuery(function($) {
-    var animationStyle, beatInterval, bpm, callback, createMarker, currentDataset, init, markers, matrix, options, steps, target, width;
-    target = new google.maps.LatLng(59.32815833916834, 18.079346359863283);
+    var animationStyle, beatInterval, bpm, callback, coords, createMarker, currentDataset, init, markers, matrix, options, steps, target, width;
+    coords = (hash.get('coords') || "").split(',');
+    target = new google.maps.LatLng(coords[0] || 59.32815833916834, coords[1] || 18.079346359863283);
     markers = [];
     matrix = [];
     steps = 16;
@@ -11,22 +12,30 @@
     bpm = 120;
     window.markerAnimationDelay = 300;
     animationStyle = google.maps.Animation.DROP;
-    currentDataset = 'restaurant';
+    currentDataset = hash.get('dataset') || 'restaurant';
     options = {
-      sequencer: 'off',
-      tempo: '120',
-      instrument: 'wood',
-      animation: 'drop'
+      sequencer: hash.get('sequencer') || 'off',
+      tempo: hash.get('tempo') || '120',
+      instrument: hash.get('instrument') || 'wood',
+      animation: hash.get('animation') || 'drop'
     };
     beatInterval = 1 / (bpm / 60) * 1000;
     init = function() {
-      var AudioPlayer, bounceMarker, clearMatrix, context, event, getCellPosition, highlightCell, i, j, map, mapOptions, overlay, row, turnOnCell, updateOptions, _i, _j, _k, _len, _ref, _ref1, _ref2,
+      var AudioPlayer, bounceMarker, clearMatrix, context, event, generateURL, getCellPosition, highlightCell, i, j, map, mapOptions, overlay, row, turnOnCell, updateOptions, _i, _j, _k, _len, _ref, _ref1, _ref2,
         _this = this;
-      $.get('datatypes.json', function(types) {
+      generateURL = function() {
         var column, index, li, text, type, _i, _len, _results;
+        coords = map.getCenter().toUrlValue();
+        hash.add({
+          coords: coords
+        });
+        hash.add({
+          dataset: currentDataset
+        });
+        hash.add(options);
         _results = [];
-        for (index = _i = 0, _len = types.length; _i < _len; index = ++_i) {
-          type = types[index];
+        for (index = _i = 0, _len = datatypes.length; _i < _len; index = ++_i) {
+          type = datatypes[index];
           li = document.createElement('li');
           li.className = 'datatype';
           if (Array.isArray(type)) {
@@ -42,7 +51,7 @@
           _results.push($("#datalist .column" + column).append(li));
         }
         return _results;
-      });
+      };
       $('body').click(function(event) {
         if (event.target.id !== 'currentDataset' && !$(event.target).closest('#datalist').length) {
           return $('#datalist').fadeOut('fast');
@@ -55,10 +64,11 @@
         $('#currentDataset').text($(event.target).text());
         $('#datalist').fadeOut('fast');
         currentDataset = $(event.target).data('type');
+        generateURL();
         return _this.search();
       });
       updateOptions = function() {
-        var el, key, markerAnimationDelay, newInterval, value, _results;
+        var el, format, key, markerAnimationDelay, newInterval, value;
         if (options.sequencer === 'on') {
           $('#overlay').fadeIn();
         } else {
@@ -74,13 +84,14 @@
         } else {
           markerAnimationDelay = 0;
         }
-        _results = [];
         for (key in options) {
           value = options[key];
           el = $("#navigation [data-property=" + key + "]");
-          _results.push(el.find('.currentState').text(value));
+          el.find('.currentState').text(value);
         }
-        return _results;
+        format = $("#navigation [data-name=" + options.instrument + "]").data('format');
+        this.audioPlayer.selectInstrument(options.instrument, format);
+        return generateURL();
       };
       $('.subitem').click(function() {
         var parent, property, value;
@@ -170,6 +181,9 @@
           return updateMatrix();
         });
       }
+      google.maps.event.addListener(map, 'idle', function() {
+        return generateURL();
+      });
       highlightCell = function(node, delay) {
         if (delay == null) {
           delay = 0;
@@ -215,24 +229,34 @@
       AudioPlayer = (function() {
 
         function AudioPlayer() {
-          var bufferLoader, paths, _l,
-            _this = this;
+          this.instruments = {};
           this.compressor = context.createDynamicsCompressor();
           this.compressor.connect(context.destination);
-          paths = [];
-          for (i = _l = 1; _l <= 16; i = ++_l) {
-            paths.push("samples/wood/wood" + i + ".ogg");
-          }
-          bufferLoader = new BufferLoader(context, paths, function(bufferList) {
-            _this.bufferList = bufferList;
-          });
-          bufferLoader.load();
         }
+
+        AudioPlayer.prototype.selectInstrument = function(name, format) {
+          var bufferLoader, paths, _l,
+            _this = this;
+          if (!(this.bufferList = this.instruments[name])) {
+            paths = [];
+            for (i = _l = 1; _l <= 16; i = ++_l) {
+              paths.push("samples/" + name + "/" + name + i + "." + format);
+            }
+            bufferLoader = new BufferLoader(context, paths, function(bufferList) {
+              _this.bufferList = bufferList;
+              return _this.instruments[name] = _this.bufferList;
+            });
+            return bufferLoader.load();
+          }
+        };
 
         AudioPlayer.prototype.play = function(index, delay) {
           var note;
           if (delay == null) {
             delay = 0;
+          }
+          if (!this.bufferList) {
+            return;
           }
           note = context.createBufferSource();
           note.buffer = this.bufferList[index];
@@ -246,7 +270,7 @@
 
       })();
       this.search();
-      this.audioPlayer = window.audioPlayer = new AudioPlayer;
+      this.audioPlayer = new AudioPlayer;
       this.start();
       return updateOptions();
     };

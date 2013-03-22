@@ -34,7 +34,7 @@ BufferLoader.prototype.loadBuffer = function(url, index) {
   }
 
   request.onerror = function() {
-    alert('BufferLoader: XHR error');
+    console.log('BufferLoader: XHR error');
   }
 
   request.send();
