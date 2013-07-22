@@ -27,6 +27,7 @@ jQuery ($) ->
         hash.add coords: coords
         hash.add dataset: currentDataset
         hash.add options
+        $("#datalist ul").empty()
 
         for type, index in datatypes
           li = document.createElement('li')

@@ -33,6 +33,7 @@
           dataset: currentDataset
         });
         hash.add(options);
+        $("#datalist ul").empty();
         _results = [];
         for (index = _i = 0, _len = datatypes.length; _i < _len; index = ++_i) {
           type = datatypes[index];
