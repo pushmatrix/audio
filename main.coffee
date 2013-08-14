@@ -1,6 +1,8 @@
+
+
 jQuery ($) ->
   coords = (hash.get('coords') || "").split(',')
-  target = new google.maps.LatLng(coords[0] || 1.322221, coords[1] || 103.826531)
+  target = new google.maps.LatLng(coords[0] || 59.32815833916834, coords[1] || 18.079346359863283)
   markers = []
   matrix = []
   steps  = 16
@@ -90,7 +92,7 @@ jQuery ($) ->
       # Setup map options
       mapOptions =
           center: target
-          zoom: 13
+          zoom: 14
           streetViewControl: false
           panControl: false
           mapTypeId: google.maps.MapTypeId.ROADMAP
