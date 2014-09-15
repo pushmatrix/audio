@@ -1,6 +1,6 @@
 jQuery ($) ->
   coords = (hash.get('coords') || "").split(',')
-  target = new google.maps.LatLng(coords[0] || 1.322221, coords[1] || 103.826531)
+  target = new google.maps.LatLng(coords[0] || 59.32815833916834, coords[1] || 18.079346359863283)
   markers = []
   matrix = []
   steps  = 16
@@ -227,7 +227,7 @@ jQuery ($) ->
           note.buffer = @bufferList[index]
           note.connect(@compressor)
           setTimeout ->
-            note.noteOn(0)
+            note.start(0)
           , delay
 
       @search()
